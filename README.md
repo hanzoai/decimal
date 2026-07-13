@@ -14,4 +14,4 @@ cost.String() // "0.00132"  (never floored to 0)
 ```
 
 The numeric core beneath [`hanzoai/money`](https://github.com/hanzoai/money). Stdlib only.
-MIT.
+BSD-3-Clause.
