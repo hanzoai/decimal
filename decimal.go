@@ -74,37 +74,54 @@ func NewFromBig(coef *big.Int, scale int32) Decimal {
 // Parse reads a decimal string ("123", "-0.00132", "+6.60") EXACTLY — no float. The
 // scale is the number of fractional digits written (so "6.60" has scale 2). An empty
 // string is 0.
+//
+// The grammar is exactly [+|-] digits [. digits] with at least one digit, and it is
+// enforced by checking the digits rather than by asking big.Int to. Delegating the
+// check let malformed input through in the worst possible way: this function strips
+// ONE leading sign, and big.Int.SetString then accepted a SECOND one, so "--5"
+// parsed as +5 — a sign inversion on a value that is usually money, where a credit
+// silently becomes a charge. A bare "-", "+" or "." fell through the other side of
+// the same gap, taking the intPart=="" → "0" fallback and parsing as a confident
+// zero. Both now return an error.
 func Parse(s string) (Decimal, error) {
 	s = strings.TrimSpace(s)
 	if s == "" {
 		return Decimal{}, nil
 	}
-	neg := false
-	switch s[0] {
+	body, neg := s, false
+	switch body[0] {
 	case '+':
-		s = s[1:]
+		body = body[1:]
 	case '-':
-		neg, s = true, s[1:]
+		neg, body = true, body[1:]
 	}
-	intPart, fracPart := s, ""
-	if i := strings.IndexByte(s, '.'); i >= 0 {
-		intPart, fracPart = s[:i], s[i+1:]
-	}
-	if intPart == "" {
-		intPart = "0"
+	intPart, fracPart := body, ""
+	if i := strings.IndexByte(body, '.'); i >= 0 {
+		intPart, fracPart = body[:i], body[i+1:]
 	}
 	digits := intPart + fracPart
-	if digits == "" {
+	if !allDigits(digits) {
 		return Decimal{}, fmt.Errorf("decimal: invalid %q", s)
 	}
-	c, ok := new(big.Int).SetString(digits, 10)
-	if !ok {
-		return Decimal{}, fmt.Errorf("decimal: invalid %q", s)
-	}
+	c, _ := new(big.Int).SetString(digits, 10)
 	if neg {
 		c.Neg(c)
 	}
 	return Decimal{coef: c, scale: int32(len(fracPart))}, nil
+}
+
+// allDigits reports whether s is one or more ASCII digits and nothing else — no
+// sign, no separator, no exponent, no unicode digit that strconv would widen.
+func allDigits(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // MustParse is Parse that panics on error — for constants/tests.
