@@ -14,4 +14,4 @@ cost.String() // "0.00132"  (never floored to 0)
 ```
 
 The numeric core beneath [`hanzoai/money`](https://github.com/hanzoai/money). Stdlib only.
-BSD-3-Clause.
+MIT OR Apache-2.0, at your option — per [HIP-0137](https://github.com/hanzoai/hips/blob/main/HIPs/hip-0137-one-license.md).
