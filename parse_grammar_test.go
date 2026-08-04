@@ -1,4 +1,4 @@
-// Copyright (c) 2026, Hanzo AI, Inc. BSD-3-Clause.
+// Copyright (c) 2026, Hanzo AI, Inc. MIT OR Apache-2.0.
 
 package decimal
 
