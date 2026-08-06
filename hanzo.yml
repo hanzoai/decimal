@@ -1,0 +1,18 @@
+# Canonical CI/CD config for hanzoai/decimal — the one file both the hanzoai/ci
+# reusable (.hanzo/workflows/cicd.yml) and platform.hanzo.ai read.
+#
+# A Go module (fixed-point decimal), the arithmetic hanzoai/money is built on.
+# It ships from a tag and builds no image, so there is no `images:` and no
+# `deploy:` — only a gate.
+#
+# This is the bottom of a money stack: a rounding change that passes silently
+# here is wrong everywhere above it. The parse-grammar suite pins the accepted
+# input surface, so the gate refuses both wrong answers and quietly-widened
+# syntax. `-count=1` so a green is this commit and not the test cache.
+test:
+  - name: build
+    run: |
+      set -e
+      go build ./...
+      go vet ./...
+      go test -race -count=1 ./...
